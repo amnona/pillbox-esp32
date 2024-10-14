@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # A simple flask server for logging the pillbox event history
 import datetime
 
@@ -9,11 +11,11 @@ app = Flask(__name__)
 def log_event(event, log_file='pillbox.log'):
     time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     with open(log_file, 'a') as f:
-        f.write(f'{time} {event}\n')
+        f.write(f'{time} {event} <br>\n')
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return "<h1>Pillbox Server</h1><h3>Available commands</h3>list_events_all, list_events, lid_open, lid_close, keep_alive"
 
 @app.route('/lid_open')
 def lid_open():
@@ -30,10 +32,19 @@ def keep_alive():
     log_event('Keep Alive')
     return 'Keep Alive'
 
-@app.route('/list_events')
-def list_events():
+@app.route('/list_events_all')
+def list_events_all():
     with open('pillbox.log', 'r') as f:
         return f.read()
+
+@app.route('/list_events')
+def list_events():
+    output=''
+    with open('pillbox.log', 'r') as f:
+        for cline in f:
+            if 'Keep Alive' not in cline:
+                output+=cline
+    return output
 
 if __name__ == '__main__':
     app.run()
