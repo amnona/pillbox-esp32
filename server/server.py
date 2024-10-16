@@ -32,6 +32,14 @@ def keep_alive():
     log_event('Keep Alive')
     return 'Keep Alive'
 
+
+# Debugging route with additional url encoded "txt" parameter to log
+@app.route('/debug/<txt>')
+def log(txt):
+    log_event("DEBUG: %s" % txt)
+    return txt
+
+
 @app.route('/list_events_all')
 def list_events_all():
     with open('pillbox.log', 'r') as f:
