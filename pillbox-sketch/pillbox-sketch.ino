@@ -279,7 +279,7 @@ void SendPillMail() {
 
 
 void SendGet(String address, String msg) {
-  String serverName = "http://boss.local:5000";
+  String serverName = "http://servo.local:5000";
   
   HTTPClient http;
   String serverPath = serverName + "/" + address;

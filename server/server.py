@@ -10,6 +10,7 @@ app = Flask(__name__)
 
 def log_event(event, log_file='pillbox.log'):
     time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print('%s %s' % (time, event))
     with open(log_file, 'a') as f:
         f.write(f'{time} {event} <br>\n')
 
