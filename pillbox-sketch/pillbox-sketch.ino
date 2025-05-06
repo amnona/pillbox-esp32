@@ -16,9 +16,10 @@
   #include <ESP8266WiFi.h>
 #endif
 #include <ESP_Mail_Client.h>
+#include <HTTPClient.h>
 
-#define WIFI_SSID "REPLACE_WIFI_NAME"
-#define WIFI_PASSWORD "REPLACE_WIFI_PASSWORD"
+#define WIFI_SSID "barvazim"
+#define WIFI_PASSWORD "barvazgaga"
 
 /** The smtp host name e.g. smtp.gmail.com for GMail or smtp.office365.com for Outlook or smtp.mail.yahoo.com */
 #define SMTP_HOST "smtp-relay.sendinblue.com"
@@ -26,10 +27,10 @@
 
 /* The sign in credentials */
 #define AUTHOR_EMAIL "sugaroops@yahoo.com"
-#define AUTHOR_PASSWORD "REPLACE_PASSWORD"
+#define AUTHOR_PASSWORD "XkOZz6K8dIyC0nVA"
 
 /* Recipient's email*/
-#define RECIPIENT_EMAIL "REPLACE_EMAIL"
+#define RECIPIENT_EMAIL "amnonim@gmail.com"
 
 /* time management */
 time_t now;
@@ -37,6 +38,7 @@ char strftime_buf[64];
 struct tm timeinfo;
 struct tm lasttimeinfo;
 struct tm lastEmailTimeInfo;
+struct tm lastKeepAliveTime;
 
 /* Pillbox sensor and leds */
 #define LID_OPEN LOW
@@ -158,6 +160,9 @@ void setup(){
       Serial.println("\nConnected with no Auth.");
   }
 
+  // SendGet("debug/sent_start_email");
+  SendGet("debug","sent_start_email");
+
   /* Start sending Email and close the session */
   if (!MailClient.sendMail(&smtp, &message))
     ESP_MAIL_PRINTF("Error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
@@ -166,6 +171,9 @@ void setup(){
   localtime_r(&now, &timeinfo);
   localtime_r(&now, &lasttimeinfo);
   localtime_r(&now, &lastEmailTimeInfo);
+  localtime_r(&now, &lastKeepAliveTime);
+
+  SendGet("debug","started_pillbox");
 }
 
 /* Callback function to get the Email sending status */
@@ -269,21 +277,94 @@ void SendPillMail() {
   Serial.println("Mail sent");
 }
 
+
+void SendGet(String address, String msg) {
+  String serverName = "http://boss.local:5000";
+  
+  HTTPClient http;
+  String serverPath = serverName + "/" + address;
+  String newMsg;
+  char timeStringBuff[25];
+
+  sprintf(timeStringBuff, "%02d-%02d-%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+  Serial.println(msg);
+  return;
+
+  newMsg = serverPath+"/" + String(msg)+'_'+String(timeStringBuff) + "_lid_opened_today=" + String(lidOpenedToday);
+  // http.begin(serverPath.c_str());
+  http.begin(newMsg.c_str());
+  Serial.print("Sending get to: ");
+  Serial.println(serverPath);
+  int httpResponseCode = http.GET();
+  if (httpResponseCode>0) {
+    Serial.print("Send Get: ");
+    Serial.println(serverPath);
+    Serial.print("HTTP Response code: ");
+    Serial.println(httpResponseCode);
+    String payload = http.getString();
+    Serial.println(payload);
+  }
+  else {
+    Serial.print("http get Error code: ");
+    Serial.println(httpResponseCode);
+  }
+  // Free resources
+  http.end();
+}
+
+
+
 void loop() {
   int lidState;
+  String lidStateStr;
+  int tmpLid1;
+  int tmpLid2;
+  int tmpLid3;
+  int tmpLid4;
 
   lidState = digitalRead(LID_SENSOR_PIN);
-
-  if (lidState == LID_OPEN) {
-    lidOpenedToday = true;
-  } else {
-  }
+  lidStateStr = String(lidState);
+  SendGet("debug","Current lid state: "+lidStateStr);
 
   if (lidState != oldLidState) {
     Serial.println("Changed.");
+    SendGet("debug","lid_state_changed");
+
+    lidStateStr = String(lidState);
+    SendGet("debug","new_state="+lidStateStr);
+
     // Serial.println("Changed. New state %d", lidState);
-    delay(200);
-    lidState = digitalRead(LID_SENSOR_PIN);
+    delay(25);
+    tmpLid1 = digitalRead(LID_SENSOR_PIN);
+    delay(25);
+    tmpLid2 = digitalRead(LID_SENSOR_PIN);
+    delay(25);
+    tmpLid3 = digitalRead(LID_SENSOR_PIN);
+    delay(25);
+    tmpLid4 = digitalRead(LID_SENSOR_PIN);
+
+    if ((lidState == tmpLid1) && (tmpLid1==tmpLid2) && (tmpLid2==tmpLid3) && (tmpLid3==tmpLid4)) {
+      lidStateStr = String(lidState);
+      SendGet("debug","new_state_detected="+lidStateStr);
+      if (lidState == LID_OPEN) {
+        SendGet("debug","lid_open");
+      } else {
+        SendGet("debug","lid_close");
+      }
+    } else {
+      lidStateStr = String(lidState)+","+String(tmpLid1)+","+String(tmpLid2)+","+String(tmpLid3)+","+String(tmpLid4);
+      SendGet("debug","flicker_lid_state="+lidStateStr);
+      lidState = oldLidState;
+    }
+    oldLidState = lidState;
+  }
+
+if (lidState == LID_OPEN) {
+    if (!lidOpenedToday) {
+      SendGet("debug","lid_opened_today");
+    }
+    lidOpenedToday = true;
+  } else {
   }
 
 /*
@@ -298,8 +379,10 @@ void loop() {
   // Serial.println(strftime_buf);
 
   /* if a new day - reset the alarm */
+  // if (lasttimeinfo.tm_hour > timeinfo.tm_hour) {
   if (lasttimeinfo.tm_hour > timeinfo.tm_hour) {
     Serial.println("New day - resetting lidopen");
+    SendGet("debug","new_day_resetting_lidopen");
     lidOpenedToday = false;
     lasttimeinfo = timeinfo;
   }
@@ -309,16 +392,23 @@ void loop() {
       Serial.println("Need to take your pill");
       if (lastEmailTimeInfo.tm_hour < timeinfo.tm_hour) {
         Serial.println("sending reminder email");
+        SendGet("debug","sending_reminder_email");
         SendPillMail();
+        SendGet("debug","reminder_email_sent");
         lastEmailTimeInfo = timeinfo;
       }
     }
+  }
+
+  if (lastKeepAliveTime.tm_min < timeinfo.tm_min) {
+    SendGet("debug","keep_alive");
+    lastKeepAliveTime = timeinfo;
   }
 
   digitalWrite(LED_GREEN_PIN, lidOpenedToday);
   digitalWrite(LED_RED_PIN, !lidOpenedToday);
   digitalWrite(LED_BLUE_PIN, lidState);
 
-  delay(100);
+  delay(200);
 }
 
