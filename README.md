@@ -8,7 +8,52 @@ To connect:
 * to GPIO 14 connect RED led input
 * to GPIO 12 connect GREEN led input
 
-* in the sketch, replace the REPLACE strings (wifi name/password, mail password, recipient email)
+* in the sketch directory, create a secrets.h file by copying secrets-example.h and editing all usernames/passwords
 
 * To work with Arduino IDE, need to work slow connection rate 115200 and select Sparkfun ESP32 Thing Plus C
 
+* For setting up the server (which keeps a log of open/close events):
+
+```
+conda create --name pillbox-server python=3
+pip install flask
+```
+
+Optional: add the server to the computer autorun. On raspberry pi:
+
+Create a /lib/systemd/system/pillbox.service file containing:
+
+ ```
+ [Unit]
+ Description=ESP32 Pillbox log server running on port 5000
+ After=multi-user.target
+
+ [Service]
+ Type=idle
+ ExecStart=/usr/bin/bash /home/batata/git/pillbox-esp32/server/run-server.sh
+
+ [Install]
+ WantedBy=multi-user.target
+```
+
+and then execute:
+```
+sudo chmod 644 /lib/systemd/system/pillbox.service
+sudo systemctl daemon-reload
+sudo systemctl enable pillbox.service
+```
+
+and finally
+
+```
+sudo reboot
+```
+
+* The server can be accessed using:
+
+```
+curl servo.local:5000/list_events
+```
+
+or by accessing on web browser:
+http://servo.local:5000/
