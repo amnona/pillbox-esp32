@@ -406,7 +406,7 @@ if (lidState == LID_OPEN) {
     }
   }
 
-  if ((lastKeepAliveTime.tm_min != timeinfo.tm_min) {
+  if (lastKeepAliveTime.tm_min != timeinfo.tm_min) {
     SendGet("debug","keep_alive");
     lastKeepAliveTime = timeinfo;
   }
