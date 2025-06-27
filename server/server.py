@@ -30,7 +30,7 @@ def lid_close():
 
 @app.route('/keep_alive')
 def keep_alive():
-    log_event('Keep Alive')
+    log_event('keep_alive')
     return 'Keep Alive'
 
 
@@ -44,15 +44,22 @@ def log(txt):
 @app.route('/list_events_all')
 def list_events_all():
     with open('pillbox.log', 'r') as f:
-        return f.read()
+        # Read the entire log file and return it as a string but with lines in backwards order (last line first)
+        lines = f.readlines()
+        lines.reverse()
+        return ''.join(lines)
+        # return f.read()
 
 @app.route('/list_events')
 def list_events():
     output=''
     with open('pillbox.log', 'r') as f:
         for cline in f:
-            if 'Keep Alive' not in cline:
+            if 'keep_alive' not in cline:
                 output+=cline
+    # change output to be in reverse order (last line first)
+    output = output.splitlines()[::-1]
+    output = '<br>'.join(output)
     return output
 
 if __name__ == '__main__':
