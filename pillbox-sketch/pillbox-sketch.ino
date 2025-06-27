@@ -17,20 +17,9 @@
 #endif
 #include <ESP_Mail_Client.h>
 #include <HTTPClient.h>
+#include <time.h>
 
-#define WIFI_SSID "barvazim"
-#define WIFI_PASSWORD "barvazgaga"
-
-/** The smtp host name e.g. smtp.gmail.com for GMail or smtp.office365.com for Outlook or smtp.mail.yahoo.com */
-#define SMTP_HOST "smtp-relay.sendinblue.com"
-#define SMTP_PORT 587
-
-/* The sign in credentials */
-#define AUTHOR_EMAIL "sugaroops@yahoo.com"
-#define AUTHOR_PASSWORD "XkOZz6K8dIyC0nVA"
-
-/* Recipient's email*/
-#define RECIPIENT_EMAIL "amnonim@gmail.com"
+#include "secrets.h" // 
 
 /* time management */
 time_t now;
@@ -41,8 +30,8 @@ struct tm lastEmailTimeInfo;
 struct tm lastKeepAliveTime;
 
 /* Pillbox sensor and leds */
-#define LID_OPEN LOW
-#define LID_CLOSED HIGH
+#define LID_OPEN HIGH
+#define LID_CLOSED LOW
 #define LID_SENSOR_PIN 15
 #define LED_GREEN_PIN 12
 #define LED_RED_PIN 14
@@ -52,6 +41,11 @@ int ledState=0;
 int oldLidState = LID_CLOSED;
 
 int lidOpenedToday = false;
+
+// Timezone and NTP server
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = 3600 * 2; // UTC+2 (Israel Standard Time, for example)
+const int   daylightOffset_sec = 3600; // add 1 hour if daylight saving time applies
 
 /* Declare the global used SMTPSession object for SMTP transport */
 SMTPSession smtp;
@@ -167,11 +161,18 @@ void setup(){
   if (!MailClient.sendMail(&smtp, &message))
     ESP_MAIL_PRINTF("Error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
 
-  time(&now);
-  localtime_r(&now, &timeinfo);
-  localtime_r(&now, &lasttimeinfo);
-  localtime_r(&now, &lastEmailTimeInfo);
-  localtime_r(&now, &lastKeepAliveTime);
+  // Configure time via NTP
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+  // time(&now);
+  // localtime_r(&now, &timeinfo);
+  // localtime_r(&now, &lasttimeinfo);
+  // localtime_r(&now, &lastEmailTimeInfo);
+  // localtime_r(&now, &lastKeepAliveTime);
+  getLocalTime(&timeinfo);
+  getLocalTime(&lasttimeinfo);
+  getLocalTime(&lastEmailTimeInfo);
+  getLocalTime(&lastKeepAliveTime);
 
   SendGet("debug","started_pillbox");
 }
@@ -288,13 +289,18 @@ void SendGet(String address, String msg) {
 
   sprintf(timeStringBuff, "%02d-%02d-%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
   Serial.println(msg);
-  return;
 
   newMsg = serverPath+"/" + String(msg)+'_'+String(timeStringBuff) + "_lid_opened_today=" + String(lidOpenedToday);
+  for (char& c : newMsg) {
+      if (c == ' ') {
+          c = '_';
+      }
+  }
   // http.begin(serverPath.c_str());
-  http.begin(newMsg.c_str());
   Serial.print("Sending get to: ");
   Serial.println(serverPath);
+  http.begin(newMsg.c_str());
+  Serial.println(newMsg.c_str());
   int httpResponseCode = http.GET();
   if (httpResponseCode>0) {
     Serial.print("Send Get: ");
@@ -324,8 +330,7 @@ void loop() {
 
   lidState = digitalRead(LID_SENSOR_PIN);
   lidStateStr = String(lidState);
-  SendGet("debug","Current lid state: "+lidStateStr);
-
+  // SendGet("debug","Current lid state: "+lidStateStr);
   if (lidState != oldLidState) {
     Serial.println("Changed.");
     SendGet("debug","lid_state_changed");
@@ -338,12 +343,13 @@ void loop() {
     tmpLid1 = digitalRead(LID_SENSOR_PIN);
     delay(25);
     tmpLid2 = digitalRead(LID_SENSOR_PIN);
-    delay(25);
-    tmpLid3 = digitalRead(LID_SENSOR_PIN);
-    delay(25);
-    tmpLid4 = digitalRead(LID_SENSOR_PIN);
+    // delay(25);
+    // tmpLid3 = digitalRead(LID_SENSOR_PIN);
+    // delay(25);
+    // tmpLid4 = digitalRead(LID_SENSOR_PIN);
 
-    if ((lidState == tmpLid1) && (tmpLid1==tmpLid2) && (tmpLid2==tmpLid3) && (tmpLid3==tmpLid4)) {
+    // if ((lidState == tmpLid1) && (tmpLid1==tmpLid2) && (tmpLid2==tmpLid3) && (tmpLid3==tmpLid4)) {
+    if ((lidState == tmpLid1) && (tmpLid1==tmpLid2)) {
       lidStateStr = String(lidState);
       SendGet("debug","new_state_detected="+lidStateStr);
       if (lidState == LID_OPEN) {
@@ -373,24 +379,24 @@ if (lidState == LID_OPEN) {
   digitalWrite(LED_RED_PIN, ledState);
 */
 
-  time(&now);
-  localtime_r(&now, &timeinfo);
+  // time(&now);
+  // localtime_r(&now, &timeinfo);
+  getLocalTime(&timeinfo);
   strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
   // Serial.println(strftime_buf);
 
   /* if a new day - reset the alarm */
   // if (lasttimeinfo.tm_hour > timeinfo.tm_hour) {
-  if (lasttimeinfo.tm_hour > timeinfo.tm_hour) {
+  if (lasttimeinfo.tm_mday != timeinfo.tm_mday) {
     Serial.println("New day - resetting lidopen");
     SendGet("debug","new_day_resetting_lidopen");
     lidOpenedToday = false;
-    lasttimeinfo = timeinfo;
   }
-
+  
   if (!lidOpenedToday) {
     if (timeinfo.tm_hour >= 11) {
-      Serial.println("Need to take your pill");
-      if (lastEmailTimeInfo.tm_hour < timeinfo.tm_hour) {
+      // Serial.println("Need to take your pill");
+      if (lastEmailTimeInfo.tm_hour != timeinfo.tm_hour) {
         Serial.println("sending reminder email");
         SendGet("debug","sending_reminder_email");
         SendPillMail();
@@ -400,14 +406,18 @@ if (lidState == LID_OPEN) {
     }
   }
 
-  if (lastKeepAliveTime.tm_min < timeinfo.tm_min) {
+  if ((lastKeepAliveTime.tm_min != timeinfo.tm_min) {
     SendGet("debug","keep_alive");
     lastKeepAliveTime = timeinfo;
   }
 
   digitalWrite(LED_GREEN_PIN, lidOpenedToday);
   digitalWrite(LED_RED_PIN, !lidOpenedToday);
+  // digitalWrite(LED_GREEN_PIN, 1);
+  // digitalWrite(LED_RED_PIN, 1);
   digitalWrite(LED_BLUE_PIN, lidState);
+
+  lasttimeinfo = timeinfo;
 
   delay(200);
 }
