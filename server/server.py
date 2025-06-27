@@ -59,7 +59,7 @@ def list_events():
                 output+=cline
     # change output to be in reverse order (last line first)
     output = output.splitlines()[::-1]
-    output = '<br>'.join(output)
+    output = '<br>\n'.join(output)
     return output
 
 if __name__ == '__main__':
