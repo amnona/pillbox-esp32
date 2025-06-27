@@ -16,6 +16,7 @@ def log_event(event, log_file='pillbox.log'):
 
 @app.route('/')
 def index():
+    return list_events_reverse()
     return "<h1>Pillbox Server</h1><h3>Available commands</h3>list_events_all, list_events, lid_open, lid_close, keep_alive"
 
 @app.route('/lid_open')
@@ -45,10 +46,7 @@ def log(txt):
 def list_events_all():
     with open('pillbox.log', 'r') as f:
         # Read the entire log file and return it as a string but with lines in backwards order (last line first)
-        lines = f.readlines()
-        lines.reverse()
-        return ''.join(lines)
-        # return f.read()
+        return f.read()
 
 @app.route('/list_events')
 def list_events():
@@ -58,9 +56,29 @@ def list_events():
             if 'keep_alive' not in cline:
                 output+=cline
     # change output to be in reverse order (last line first)
+    return output
+
+@app.route('/list_events_all_reverse')
+def list_events_all_reverse():
+    with open('pillbox.log', 'r') as f:
+        # Read the entire log file and return it as a string but with lines in backwards order (last line first)
+        lines = f.readlines()
+        lines.reverse()
+        return ''.join(lines)
+        # return f.read()
+
+@app.route('/list_events_reverse')
+def list_events_reverse():
+    output=''
+    with open('pillbox.log', 'r') as f:
+        for cline in f:
+            if 'keep_alive' not in cline:
+                output+=cline
+    # change output to be in reverse order (last line first)
     output = output.splitlines()[::-1]
     output = '<br>\n'.join(output)
     return output
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0")
