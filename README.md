@@ -19,6 +19,7 @@ For raspberry pi running BookWorm, install conda using:
 wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh
 ```
 
+Create the conda env for the server:
 ```
 conda create --name pillbox-server python=3
 pip install flask
