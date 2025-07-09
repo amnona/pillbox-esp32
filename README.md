@@ -22,6 +22,7 @@ wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge
 Create the conda env for the server:
 ```
 conda create --name pillbox-server python=3
+conda activate pillbox-server
 pip install flask
 ```
 
