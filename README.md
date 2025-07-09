@@ -14,6 +14,11 @@ To connect:
 
 * For setting up the server (which keeps a log of open/close events):
 
+For raspberry pi running BookWorm, install conda using:
+```
+wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh
+```
+
 ```
 conda create --name pillbox-server python=3
 pip install flask
