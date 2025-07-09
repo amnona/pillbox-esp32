@@ -26,6 +26,11 @@ conda activate pillbox-server
 pip install flask
 ```
 
+Clone this repository:
+```
+https://github.com/amnona/pillbox-esp32.git
+```
+
 Optional: add the server to the computer autorun. On raspberry pi:
 
 Create a /lib/systemd/system/pillbox.service file containing:
