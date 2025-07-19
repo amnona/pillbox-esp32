@@ -90,79 +90,86 @@ void setup(){
   /* Set the callback function to get the sending results */
   smtp.callback(smtpCallback);
 
-  /* Declare the Session_Config for user defined session credentials */
-  Session_Config config;
+  // /* Declare the Session_Config for user defined session credentials */
+  // Session_Config config;
 
-  /* Set the session config */
-  config.server.host_name = SMTP_HOST;
-  config.server.port = SMTP_PORT;
-  config.login.email = AUTHOR_EMAIL;
-  config.login.password = AUTHOR_PASSWORD;
-  config.login.user_domain = "";
+  // /* Set the session config */
+  // config.server.host_name = SMTP_HOST;
+  // config.server.port = SMTP_PORT;
+  // config.login.email = AUTHOR_EMAIL;
+  // config.login.password = AUTHOR_PASSWORD;
+  // config.login.user_domain = "";
 
-  /*
-  Set the NTP config time
-  For times east of the Prime Meridian use 0-12
-  For times west of the Prime Meridian add 12 to the offset.
-  Ex. American/Denver GMT would be -6. 6 + 12 = 18
-  See https://en.wikipedia.org/wiki/Time_zone for a list of the GMT/UTC timezone offsets
-  */
-  config.time.ntp_server = F("pool.ntp.org,time.nist.gov");
-  config.time.gmt_offset = 2;
-  config.time.day_light_offset = 0;
+  // /*
+  // Set the NTP config time
+  // For times east of the Prime Meridian use 0-12
+  // For times west of the Prime Meridian add 12 to the offset.
+  // Ex. American/Denver GMT would be -6. 6 + 12 = 18
+  // See https://en.wikipedia.org/wiki/Time_zone for a list of the GMT/UTC timezone offsets
+  // */
+  // config.time.ntp_server = F("pool.ntp.org,time.nist.gov");
+  // config.time.gmt_offset = 2;
+  // config.time.day_light_offset = 60;
 
-  /* Declare the message class */
-  SMTP_Message message;
+  // /* Declare the message class */
+  // SMTP_Message message;
 
-  /* Set the message headers */
-  message.sender.name = F("PillBox");
-  message.sender.email = AUTHOR_EMAIL;
-  message.subject = F("PillBox started");
-  message.addRecipient(F("Amnon"), RECIPIENT_EMAIL);
+  // /* Set the message headers */
+  // message.sender.name = F("PillBox");
+  // message.sender.email = AUTHOR_EMAIL;
+  // message.subject = F("PillBox started");
+  // message.addRecipient(F("Amnon"), RECIPIENT_EMAIL);
     
-  /*Send HTML message*/
-  /*String htmlMsg = "<div style=\"color:#2f4468;\"><h1>Hello World!</h1><p>- Sent from ESP board</p></div>";
-  message.html.content = htmlMsg.c_str();
-  message.html.content = htmlMsg.c_str();
-  message.text.charSet = "us-ascii";
-  message.html.transfer_encoding = Content_Transfer_Encoding::enc_7bit;*/
+  // /*Send HTML message*/
+  // /*String htmlMsg = "<div style=\"color:#2f4468;\"><h1>Hello World!</h1><p>- Sent from ESP board</p></div>";
+  // message.html.content = htmlMsg.c_str();
+  // message.html.content = htmlMsg.c_str();
+  // message.text.charSet = "us-ascii";
+  // message.html.transfer_encoding = Content_Transfer_Encoding::enc_7bit;*/
 
    
-  //Send raw text message
-  String textMsg = "Pillbox started";
-  message.text.content = textMsg.c_str();
-  message.text.charSet = "us-ascii";
-  message.text.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
+  // //Send raw text message
+  // String textMsg = "Pillbox started";
+  // message.text.content = textMsg.c_str();
+  // message.text.charSet = "us-ascii";
+  // message.text.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
   
-  message.priority = esp_mail_smtp_priority::esp_mail_smtp_priority_low;
-  message.response.notify = esp_mail_smtp_notify_success | esp_mail_smtp_notify_failure | esp_mail_smtp_notify_delay;
+  // message.priority = esp_mail_smtp_priority::esp_mail_smtp_priority_low;
+  // message.response.notify = esp_mail_smtp_notify_success | esp_mail_smtp_notify_failure | esp_mail_smtp_notify_delay;
 
+  // // Configure time via NTP
+  // configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
-  /* Connect to the server */
-  if (!smtp.connect(&config)){
-    ESP_MAIL_PRINTF("Connection error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
-    return;
-  }
+  // /* Connect to the server */
+  // if (!smtp.connect(&config)){
+  //   ESP_MAIL_PRINTF("Connection error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
+  //   SendGet("debug","Error connecting to smtp for pillbox started mail");
+  //   return;
+  // }
 
-  if (!smtp.isLoggedIn()){
-    Serial.println("\nNot yet logged in.");
-  }
-  else{
-    if (smtp.isAuthenticated())
-      Serial.println("\nSuccessfully logged in.");
-    else
-      Serial.println("\nConnected with no Auth.");
-  }
+  // if (!smtp.isLoggedIn()){
+  //   Serial.println("\nNot yet logged in.");
+  // }
+  // else{
+  //   if (smtp.isAuthenticated())
+  //     Serial.println("\nSuccessfully logged in.");
+  //   else
+  //     Serial.println("\nConnected with no Auth.");
+  // }
 
-  // SendGet("debug/sent_start_email");
-  SendGet("debug","sent_start_email");
+  // // SendGet("debug/sent_start_email");
+  // SendGet("debug","sent_start_email");
 
-  /* Start sending Email and close the session */
-  if (!MailClient.sendMail(&smtp, &message))
-    ESP_MAIL_PRINTF("Error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
+  // /* Start sending Email and close the session */
+  // if (!MailClient.sendMail(&smtp, &message)) {
+  //   ESP_MAIL_PRINTF("Error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
+  //   SendGet("debug","Error sending for pillbox started mail");
+  // }
 
-  // Configure time via NTP
-  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+  SendPillMail("Pillbox started","I am ready now");
+
+  // // Configure time via NTP
+  // configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 
   // time(&now);
   // localtime_r(&now, &timeinfo);
@@ -217,7 +224,8 @@ void smtpCallback(SMTP_Status status){
 }
 
 
-void SendPillMail() {
+void SendPillMail(String subject, String content) {
+  /* Declare the Session_Config for user defined session credentials */
   Session_Config config;
 
   /* Set the session config */
@@ -227,16 +235,16 @@ void SendPillMail() {
   config.login.password = AUTHOR_PASSWORD;
   config.login.user_domain = "";
 
-  // /*
-  // Set the NTP config time
-  // For times east of the Prime Meridian use 0-12
-  // For times west of the Prime Meridian add 12 to the offset.
-  // Ex. American/Denver GMT would be -6. 6 + 12 = 18
-  // See https://en.wikipedia.org/wiki/Time_zone for a list of the GMT/UTC timezone offsets
-  // */
-  // config.time.ntp_server = F("pool.ntp.org,time.nist.gov");
-  // config.time.gmt_offset = 2;
-  // config.time.day_light_offset = 0;
+  /*
+  Set the NTP config time
+  For times east of the Prime Meridian use 0-12
+  For times west of the Prime Meridian add 12 to the offset.
+  Ex. American/Denver GMT would be -6. 6 + 12 = 18
+  See https://en.wikipedia.org/wiki/Time_zone for a list of the GMT/UTC timezone offsets
+  */
+  config.time.ntp_server = F("pool.ntp.org,time.nist.gov");
+  config.time.gmt_offset = 2;
+  config.time.day_light_offset = 60;
 
   /* Declare the message class */
   SMTP_Message message;
@@ -244,21 +252,35 @@ void SendPillMail() {
   /* Set the message headers */
   message.sender.name = F("PillBox");
   message.sender.email = AUTHOR_EMAIL;
-  message.subject = F("Did you Forget to take your pill");
+  // message.subject = F("PillBox started");
+  message.subject = subject.c_str();
   message.addRecipient(F("Amnon"), RECIPIENT_EMAIL);
+    
+  /*Send HTML message*/
+  /*String htmlMsg = "<div style=\"color:#2f4468;\"><h1>Hello World!</h1><p>- Sent from ESP board</p></div>";
+  message.html.content = htmlMsg.c_str();
+  message.html.content = htmlMsg.c_str();
+  message.text.charSet = "us-ascii";
+  message.html.transfer_encoding = Content_Transfer_Encoding::enc_7bit;*/
+
    
   //Send raw text message
-  String textMsg = "Amnon loves you moremoremoremoremoremoremoremoremoremore";
-  message.text.content = textMsg.c_str();
+  // String textMsg = "Pillbox started";
+  // message.text.content = textMsg.c_str();
+  message.text.content = content.c_str();
   message.text.charSet = "us-ascii";
   message.text.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
   
   message.priority = esp_mail_smtp_priority::esp_mail_smtp_priority_low;
   message.response.notify = esp_mail_smtp_notify_success | esp_mail_smtp_notify_failure | esp_mail_smtp_notify_delay;
 
+  // Configure time via NTP
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
   /* Connect to the server */
   if (!smtp.connect(&config)){
     ESP_MAIL_PRINTF("Connection error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
+    SendGet("debug","Error connecting to smtp for pillbox started mail");
     return;
   }
 
@@ -272,10 +294,80 @@ void SendPillMail() {
       Serial.println("\nConnected with no Auth.");
   }
 
+  // SendGet("debug/sent_start_email");
+  SendGet("debug","sent_email");
+
   /* Start sending Email and close the session */
-  if (!MailClient.sendMail(&smtp, &message))
+  if (!MailClient.sendMail(&smtp, &message)) {
     ESP_MAIL_PRINTF("Error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
+    SendGet("debug","Error sending for pillbox started mail");
+  }
+
+
+  // Session_Config config;
+
+  //   SendGet("debug","preparing to send reminder email");
+  // /* Set the session config */
+  // config.server.host_name = SMTP_HOST;
+  // config.server.port = SMTP_PORT;
+  // config.login.email = AUTHOR_EMAIL;
+  // config.login.password = AUTHOR_PASSWORD;
+  // config.login.user_domain = "";
+
+  // // /*
+  // // Set the NTP config time
+  // // For times east of the Prime Meridian use 0-12
+  // // For times west of the Prime Meridian add 12 to the offset.
+  // // Ex. American/Denver GMT would be -6. 6 + 12 = 18
+  // // See https://en.wikipedia.org/wiki/Time_zone for a list of the GMT/UTC timezone offsets
+  // // */
+  // config.time.ntp_server = F("pool.ntp.org,time.nist.gov");
+  // config.time.gmt_offset = 2;
+  // config.time.day_light_offset = 60;
+
+  // /* Declare the message class */
+  // SMTP_Message message;
+
+  // /* Set the message headers */
+  // message.sender.name = F("PillBox");
+  // message.sender.email = AUTHOR_EMAIL;
+  // message.subject = F("Did you Forget to take your pill");
+  // message.addRecipient(F("Amnon"), RECIPIENT_EMAIL);
+   
+  // //Send raw text message
+  // String textMsg = "Amnon loves you moremoremoremoremoremoremoremoremoremore";
+  // message.text.content = textMsg.c_str();
+  // message.text.charSet = "us-ascii";
+  // message.text.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
+  
+  // message.priority = esp_mail_smtp_priority::esp_mail_smtp_priority_low;
+  // message.response.notify = esp_mail_smtp_notify_success | esp_mail_smtp_notify_failure | esp_mail_smtp_notify_delay;
+
+  // /* Connect to the server */
+  // if (!smtp.connect(&config)){
+  //   ESP_MAIL_PRINTF("Connection error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
+  //   SendGet("debug","failed to connect for reminder email");
+  //   return;
+  // }
+
+  // if (!smtp.isLoggedIn()){
+  //   Serial.println("\nNot yet logged in.");
+  // }
+  // else{
+  //   if (smtp.isAuthenticated())
+  //     Serial.println("\nSuccessfully logged in.");
+  //   else
+  //     Serial.println("\nConnected with no Auth.");
+  // }
+
+  // /* Start sending Email and close the session */
+  // if (!MailClient.sendMail(&smtp, &message)) {
+  //   ESP_MAIL_PRINTF("Error, Status Code: %d, Error Code: %d, Reason: %s", smtp.statusCode(), smtp.errorCode(), smtp.errorReason().c_str());
+  //    SendGet("debug","Error sending reminder email");
+  //    return;
+  // }
   Serial.println("Mail sent");
+  SendGet("debug","finised_send_mail");
 }
 
 
@@ -285,12 +377,13 @@ void SendGet(String address, String msg) {
   HTTPClient http;
   String serverPath = serverName + "/" + address;
   String newMsg;
-  char timeStringBuff[25];
+  char timeStringBuff[30];
 
+  getLocalTime(&timeinfo);
   sprintf(timeStringBuff, "%02d-%02d-%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
   Serial.println(msg);
 
-  newMsg = serverPath+"/" + String(msg)+'_'+String(timeStringBuff) + "_lid_opened_today=" + String(lidOpenedToday);
+  newMsg = serverPath+"/" + String(msg)+'_'+String(timeStringBuff) + "__lid_opened_today=" + String(lidOpenedToday);
   for (char& c : newMsg) {
       if (c == ' ') {
           c = '_';
@@ -399,7 +492,7 @@ if (lidState == LID_OPEN) {
       if (lastEmailTimeInfo.tm_hour != timeinfo.tm_hour) {
         Serial.println("sending reminder email");
         SendGet("debug","sending_reminder_email");
-        SendPillMail();
+        SendPillMail("PillBox reminder","Did you forget to take your pill?\nAmnon loves you moremoremoremoremoremoremoremore");
         SendGet("debug","reminder_email_sent");
         lastEmailTimeInfo = timeinfo;
       }
